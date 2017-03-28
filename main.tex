@@ -1,4 +1,4 @@
-\documentclass[11pt]{amsart}
+\documentclass[11pt]{elsarticle}
 \usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
 \geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
 %\geometry{landscape}                % Activate for for rotated page geometry
@@ -7,19 +7,23 @@
 \usepackage{graphicx}
 \usepackage{amssymb}
 \usepackage{epstopdf}
+\usepackage{natbib}
 \DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
 \graphicspath{{figures/}}
 
 \title{Reproducing ParConnect for SC16}
 \author{Marek Baranowski, Braden Caywood, Hannah Eyre, Janaan Lake, \\Kevin Parker, Kincaid Savoie, Hari Sundar, Mary Hall}
+\address{School of Computing, University of Utah, Salt Lake City, Utah, USA}
 %\date{}                                           % Activate to display a given date or no date
 
 \begin{document}
-\maketitle
-\abstract{This paper describes our SC16 Student Cluster Competition team's efforts to reproduce the results of
+\begin{abstract}
+This paper describes our SC16 Student Cluster Competition team's efforts to reproduce the results of
 an SC15 paper for an application called ParConnect.  This application finds connected components in graphs, specifically for De Bruijn graphs used in metagenomic assembly. We performed experiments running this application on a Dell PowerEdge cluster with Nvidia P100 GPus and an Intel Omni-Path interconnect. Our results demonstrated that we could reproduce some but not all of the performance claims in the
 original publication.  We expect that small data set sizes and differences in our cluster configuration account for the variation
-in results.}
+in results.
+\end{abstract}
+\maketitle
 
 \section{Introduction}
 The ability to reproduce scientific computing results is essential to advancing algorithms and optimizations suitable for high-performance
@@ -70,14 +74,14 @@ The data sets we used are shown in Table~\ref{tab:datasets}.  These were the onl
 \multicolumn{1}{|l|}{\textbf{large.fastq}} & 442461650           & 9006212\\ \hline
 \end{tabular}
 \caption{Edge counts and connected component counts for the two data sets.}\label{tab:datasets}
-\end{table}
+\end{figure}
 
 % Second table
 \begin{figure}[htp]
 \centering
 \begin{tabular}{|l|l|l|l|}
 \hline
-\multirow{3}{*}{\rotatebox{90}{Time (sec)\hspace*{.3in}}} & \multicolumn{3}{c|}{\begin{tabular}[c]{@{}l@{}}Computation and communication runtime along the iterations\end{tabular}} \\ \cline{2-4} 
+\multirow{3}{*}{\rotatebox{90}{Time (sec)\hspace*{1in}}} & \multicolumn{3}{c|}{\begin{tabular}[c]{@{}l@{}}Computation and communication runtime along the iterations\end{tabular}} \\ \cline{2-4} 
     &\includegraphics[width=.29\textwidth]{naivecompcomm}&\includegraphics[width=.29\textwidth]{apcompcomm}&\includegraphics[width=.29\textwidth]{aplbcompcomm}\\ \cline{2-4} 
     & \multicolumn{3}{c|}{Iterations}\\ \hline
 \end{tabular}
@@ -89,7 +93,17 @@ The data sets we used are shown in Table~\ref{tab:datasets}.  These were the onl
 Performance results are shown in Figure~\ref{fig:compcomm}.
 For computation time and communication time on large.fastq, we see results similar to those in~\cite{Flick:2015}. The Na{\"i}ve algorithm is slowly falling as the number of iterations progresses, and for AP and AP\_LB, we can see slight reductions in times in each iteration. The biggest drop off in times is most apparent in iterations 6-9, but overall AP\_LB uses less time per iteration. Comparing Forge results with the measured times from within benchmark\_parconnect, we see a big discrepancy in the percentage of time spent communicating versus computing. In particular, the printouts from the tool indicate that MPI takes up approximately 20\% of the time, however the profiler indicates that 44\% of the time is in MPI calls. From Forge MAP's timeline, we can see pthread activity during some MPI portions of the execution. This indicates that computations are started while the main thread is executing an MPI call. It is also possible that some of the non-communication timed items include MPI calls, and we are counting these as compute time.
 %Fourth table
-
+\begin{figure}[htp]
+\centering
+\begin{tabular}{|l|l|l|l|}
+\hline
+\multirow{3}{*}{\rotatebox{90}{Count of tuples (millions)\hspace*{.55in}}} & \multicolumn{3}{c|}{\begin{tabular}[c]{@{}l@{}}Balance of work across processors along the iterations\end{tabular}} \\ \cline{2-4} 
+    &\includegraphics[width=.29\textwidth]{naivebalance}&\includegraphics[width=.29\textwidth]{apbalance}&\includegraphics[width=.29\textwidth]{aplbbalance}\\ \cline{2-4} 
+    & \multicolumn{3}{c|}{Iterations}\\ \hline
+\end{tabular}
+\caption{Min, mean and max tuple counts per iteration for each algorithm on 40 processes.}
+\label{fig:loadbalance}
+\end{figure}
 For the active tuple count we see behavior consistent with that of the paper. The na{\"i}ve algorithm maintains the same number of tuples through all BFS iterations. Active partition shows the number of tuples dropping at iteration 5. This is consistent with the algorithm finding connected components that have no out-going edges to other active tuples. Notably, we see an improvement in load balance beginning at iteration 5. The mean number of tuples in iteration 6-9 indicate most ranks have almost no tuples while there are a few ranks with about 5 million tuples. Finally, the AP\_LB algorithm shows that all processes maintain the same number of active tuples as indicated by the maximum and minimum. Specifically, the difference between the minimum number of tuples and maximum number of tuples is one throughout all iterations. This is consistent with the algorithm balancing the work between all ranks.
 % Fifth table
 
@@ -98,5 +112,8 @@ For the scaling study, we can clearly see that the na{\"i}ve algorithm takes app
 \section{Conclusion}
    Many of the claims in the paper were reproduced in this study. The active partition algorithm does reduce the number of work items per process as claimed in the paper. Figure 1 shows that this approach improves performance relative to the na{\"i}ve algorithm. Figure 3 shows that the algorithm balances the load of tuples between the processes as seen in the AP\_LB plot. We also see in the scaling study that the runtimes decrease as we move from the na{\"i}ve algorithm to the active partition algorithm, and another improvement when moving to the active partition with load balancing algorithm.
    In the scaling study, we did not witness a significant speed up when moving from AP to AP\_LB. This could be caused by a number of factors. It is possible the data set is too small to benefit from the load balancing approach, or the data set's components are constructed in such a way that load balancing does not help. Another possible cause is the specific configuration of our machine. We have two high bandwidth paths between each socket, requiring at most one hop across the Intel QuickPath Interconnect to get data to a socket on another node. Our machine is not like the machine used in the paper where there were a number of machines used and MPI communication latencies and bandwidth may be constrained. Our cluster could be concealing the cost of the MPI communication versus computation time. For 8 MPI ranks on iteration six, AP has min, mean, max tuples of 5410, 153231, 944395 respectively. For comparison, AP\_LB has 153231 active tuples on iteration 6 with 8 MPI ranks. The time to get from iteration 6 to iteration 7 is .4s and .08s respectively. Consistent with the maximum tuple load in AP being approximately 5 times higher than the maximum load of AP\_LB. From iteration 7 the algorithm quickly ends, and this is likely why we are not seeing the promised speed up from load balancing.
+
+\bibliographystyle{plainnat}
+\bibliography{main}
 
 \end{document}  
