@@ -61,11 +61,10 @@ has two Dell PowerEdge C1430 nodes. Each node has two Intel Xeon E5-2640 v4 CPUs
  -DBENCHMARK\_ENABLE\_CONN=ON for benchmarking purposes. We use Intel MPI because we found it works best with the Omni-Path interconnect.  We use GCC 4.9.2 and Intel MPI 5.1.3 Build 20160120. Prior the competition, we pre-compiled ParConnect with each of the three algorithms, Na{\"i}ve, AP and AP\_LB. 
  
  \section{Results}
-The data sets we used are shown in Table~\ref{tab:datasets}.  These were the only provided data sets small enough to run on our cluster.  
+The data sets we used are shown in Figure~\ref{tab:datasets}.  These were the only provided data sets small enough to run on our cluster.  
 % First table
 \begin{figure}[htp]
 \centering
-\label{tab:counts}
 \begin{tabular}{l|c|c|}
 \cline{2-3}
                                            & \textbf{Edge Count} & \textbf{\begin{tabular}[c]{@{}c@{}}Connected \\ Components
@@ -100,10 +99,11 @@ AP & \includegraphics{apallinea} \\ \hline
 AP\_LB & \includegraphics{aplballinea} \\ \hline
 \end{tabular}
 \caption{Allinea MAP compute (green) and communication (blue) times.}
-\label{fig:alinea}
+\label{fig:allinea}
 \end{figure}
+
 Performance results are shown in Figure~\ref{fig:compcomm}.
-For computation time and communication time on large.fastq, we see results similar to those in~\cite{Flick:2015}. The Na{\"i}ve algorithm is slowly falling as the number of iterations progresses, and for AP and AP\_LB, we can see slight reductions in times in each iteration. The biggest drop off in times is most apparent in iterations 6-9, but overall AP\_LB uses less time per iteration. Comparing Forge results with the measured times from within benchmark\_parconnect, we see a big discrepancy in the percentage of time spent communicating versus computing. In particular, the printouts from the tool indicate that MPI takes up approximately 20\% of the time, however the profiler indicates that 44\% of the time is in MPI calls. From Forge MAP's timeline, we can see pthread activity during some MPI portions of the execution. This indicates that computations are started while the main thread is executing an MPI call. It is also possible that some of the non-communication timed items include MPI calls, and we are counting these as compute time.
+For computation time and communication time on large.fastq, we see results similar to those in~\cite{Flick:2015}. The Na{\"i}ve algorithm is slowly falling as the number of iterations progresses, and for AP and AP\_LB, we can see slight reductions in times in each iteration. The biggest drop off in times is most apparent in iterations 6-9, but overall AP\_LB uses less time per iteration. Comparing Allinea Forge results with the measured times from within benchmark\_parconnect, we see a big discrepancy in the percentage of time spent communicating versus computing. In particular, the printouts from the tool indicate that MPI takes up approximately 20\% of the time, however the profiler indicates that 44\% of the time is in MPI calls. From Forge MAP's timeline (Figure~\ref{fig:allinea}), we can see pthread activity during some MPI portions of the execution. This indicates that computations are started while the main thread is executing an MPI call. It is also possible that some of the non-communication timed items include MPI calls, and we are counting these as compute time.
 %Fourth table
 \begin{figure}[htp]
 \centering
@@ -116,20 +116,26 @@ For computation time and communication time on large.fastq, we see results simil
 \caption{Min, mean and max tuple counts per iteration for each algorithm on 40 processes.}
 \label{fig:loadbalance}
 \end{figure}
-For the active tuple count we see behavior consistent with that of the paper. The na{\"i}ve algorithm maintains the same number of tuples through all BFS iterations. Active partition shows the number of tuples dropping at iteration 5. This is consistent with the algorithm finding connected components that have no out-going edges to other active tuples. Notably, we see an improvement in load balance beginning at iteration 5. The mean number of tuples in iteration 6-9 indicate most ranks have almost no tuples while there are a few ranks with about 5 million tuples. Finally, the AP\_LB algorithm shows that all processes maintain the same number of active tuples as indicated by the maximum and minimum. Specifically, the difference between the minimum number of tuples and maximum number of tuples is one throughout all iterations. This is consistent with the algorithm balancing the work between all ranks.
+
+For the active tuple count we see behavior consistent with that of the paper, as demonstrated in Figure~\ref{fig:loadbalance}. The na{\"i}ve algorithm maintains the same number of tuples throughout all BFS iterations. Active partition shows the number of tuples dropping at iteration 5. This is consistent with the algorithm finding connected components that have no out-going edges to other active tuples. Notably, we see an improvement in load balance beginning at iteration 5. The mean number of tuples in iteration 6-9 indicate most ranks have almost no tuples while there are a few ranks with about 5 million tuples. Finally, the AP\_LB algorithm shows that all processes maintain the same number of active tuples as indicated by the maximum and minimum. Specifically, the difference between the minimum number of tuples and maximum number of tuples is one throughout all iterations. This is consistent with the algorithm balancing the work between all ranks.
 % Fifth table
 \begin{figure}
 \centering
 \includegraphics[width=.9\textwidth]{allruntimes}
 \caption{Runtimes for \textbf{small.fastq} on 4, 8, 16, 32 and 40 processes.}
+\label{fig:runtimes}
 \end{figure}
-For the scaling study, we can clearly see that the na{\"i}ve algorithm takes approximately twice as long as either AP or AP\_LB, consistent with the paper's claim that removing connected components speeds up the algorithm. A substantial divergence from the paper is apparent from this experiment; AP and AP\_LB perform nearly identically. While not visible in the graph, the maximum runtime for AP\_LB is always about two seconds faster than the minimum runtime of AP. This is not consistent with the paper's claim for load balancing improving performance: the graph suggests AP\_LB should be about 1.7 times faster than AP. Figure 5 shows an expanded graph for the run times of AP and AP\_LB to show the difference in their run times.
+
+For the scaling study (Figure~\ref{fig:runtimes}), we can clearly see that the na{\"i}ve algorithm takes approximately twice as long as either AP or AP\_LB, consistent with the paper's claim that removing connected components speeds up the algorithm. A substantial divergence from the paper is apparent from this experiment; AP and AP\_LB perform nearly identically. While not visible in the graph, the maximum runtime for AP\_LB is always about two seconds faster than the minimum runtime of AP. This is not consistent with the paper's claim for load balancing improving performance: the graph suggests AP\_LB should be about 1.7 times faster than AP. Figure~\ref{fig:expruntimes} shows an expanded graph for the run times of AP and AP\_LB to show the difference in their run times.
 % Sixth table
 \begin{figure}
 \centering
 \includegraphics[width=.5\textwidth]{zoomedapaplb}
 \caption{Expanded AP and AP\_LB runtimes.}
+\label{fig:expruntimes}
 \end{figure}
+
+
 \section{Conclusion}
    Many of the claims in the paper were reproduced in this study. The active partition algorithm does reduce the number of work items per process as claimed in the paper. Figure 1 shows that this approach improves performance relative to the na{\"i}ve algorithm. Figure 3 shows that the algorithm balances the load of tuples between the processes as seen in the AP\_LB plot. We also see in the scaling study that the runtimes decrease as we move from the na{\"i}ve algorithm to the active partition algorithm, and another improvement when moving to the active partition with load balancing algorithm.
    In the scaling study, we did not witness a significant speed up when moving from AP to AP\_LB. This could be caused by a number of factors. It is possible the data set is too small to benefit from the load balancing approach, or the data set's components are constructed in such a way that load balancing does not help. Another possible cause is the specific configuration of our machine. We have two high bandwidth paths between each socket, requiring at most one hop across the Intel QuickPath Interconnect to get data to a socket on another node. Our machine is not like the machine used in the paper where there were a number of machines used and MPI communication latencies and bandwidth may be constrained. Our cluster could be concealing the cost of the MPI communication versus computation time. For 8 MPI ranks on iteration six, AP has min, mean, max tuples of 5410, 153231, 944395 respectively. For comparison, AP\_LB has 153231 active tuples on iteration 6 with 8 MPI ranks. The time to get from iteration 6 to iteration 7 is .4s and .08s respectively. Consistent with the maximum tuple load in AP being approximately 5 times higher than the maximum load of AP\_LB. From iteration 7 the algorithm quickly ends, and this is likely why we are not seeing the promised speed up from load balancing.
