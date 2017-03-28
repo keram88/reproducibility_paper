@@ -90,6 +90,18 @@ The data sets we used are shown in Table~\ref{tab:datasets}.  These were the onl
 \end{figure}
 
 %Third table
+\begin{figure}[htp]
+\centering
+\label{my-label}
+\begin{tabular}{|l|l|}
+\hline
+Na{\"i}ve & \includegraphics{naivealinea} \\ \hline
+AP & \includegraphics{apalinea} \\ \hline
+AP\_LB & \includegraphics{aplbalinea} \\ \hline
+\end{tabular}
+\caption{Allinea MAP compute (green) and communication (blue) times.}
+\label{fig:alinea}
+\end{figure}
 Performance results are shown in Figure~\ref{fig:compcomm}.
 For computation time and communication time on large.fastq, we see results similar to those in~\cite{Flick:2015}. The Na{\"i}ve algorithm is slowly falling as the number of iterations progresses, and for AP and AP\_LB, we can see slight reductions in times in each iteration. The biggest drop off in times is most apparent in iterations 6-9, but overall AP\_LB uses less time per iteration. Comparing Forge results with the measured times from within benchmark\_parconnect, we see a big discrepancy in the percentage of time spent communicating versus computing. In particular, the printouts from the tool indicate that MPI takes up approximately 20\% of the time, however the profiler indicates that 44\% of the time is in MPI calls. From Forge MAP's timeline, we can see pthread activity during some MPI portions of the execution. This indicates that computations are started while the main thread is executing an MPI call. It is also possible that some of the non-communication timed items include MPI calls, and we are counting these as compute time.
 %Fourth table
