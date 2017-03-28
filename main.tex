@@ -8,6 +8,7 @@
 \usepackage{amssymb}
 \usepackage{epstopdf}
 \usepackage{natbib}
+\usepackage{wrapfig}
 \DeclareGraphicsRule{.tif}{png}{.png}{`convert #1 `dirname #1`/`basename #1 .tif`.png}
 \graphicspath{{figures/}}
 
@@ -119,21 +120,20 @@ For computation time and communication time on large.fastq, we see results simil
 
 For the active tuple count we see behavior consistent with that of the paper, as demonstrated in Figure~\ref{fig:loadbalance}. The na{\"i}ve algorithm maintains the same number of tuples throughout all BFS iterations. Active partition shows the number of tuples dropping at iteration 5. This is consistent with the algorithm finding connected components that have no out-going edges to other active tuples. Notably, we see an improvement in load balance beginning at iteration 5. The mean number of tuples in iteration 6-9 indicate most ranks have almost no tuples while there are a few ranks with about 5 million tuples. Finally, the AP\_LB algorithm shows that all processes maintain the same number of active tuples as indicated by the maximum and minimum. Specifically, the difference between the minimum number of tuples and maximum number of tuples is one throughout all iterations. This is consistent with the algorithm balancing the work between all ranks.
 % Fifth table
-\begin{figure}
+\begin{figure}[htp]
 \centering
 \includegraphics[width=.9\textwidth]{allruntimes}
 \caption{Runtimes for \textbf{small.fastq} on 4, 8, 16, 32 and 40 processes.}
 \label{fig:runtimes}
 \end{figure}
 
-For the scaling study (Figure~\ref{fig:runtimes}), we can clearly see that the na{\"i}ve algorithm takes approximately twice as long as either AP or AP\_LB, consistent with the paper's claim that removing connected components speeds up the algorithm. A substantial divergence from the paper is apparent from this experiment; AP and AP\_LB perform nearly identically. While not visible in the graph, the maximum runtime for AP\_LB is always about two seconds faster than the minimum runtime of AP. This is not consistent with the paper's claim for load balancing improving performance: the graph suggests AP\_LB should be about 1.7 times faster than AP. Figure~\ref{fig:expruntimes} shows an expanded graph for the run times of AP and AP\_LB to show the difference in their run times.
-% Sixth table
-\begin{figure}
+\begin{wrapfigure}{r}{0.29\textwidth}
 \centering
-\includegraphics[width=.5\textwidth]{zoomedapaplb}
+\includegraphics[width=.27\textwidth]{zoomedapaplb}
 \caption{Expanded AP and AP\_LB runtimes.}
 \label{fig:expruntimes}
-\end{figure}
+\end{wrapfigure}
+For the scaling study (Figure~\ref{fig:runtimes}), we can clearly see that the na{\"i}ve algorithm takes approximately twice as long as either AP or AP\_LB, consistent with the paper's claim that removing connected components speeds up the algorithm. A substantial divergence from the paper is apparent from this experiment; AP and AP\_LB perform nearly identically. While not visible in the graph, the maximum runtime for AP\_LB is always about two seconds faster than the minimum runtime of AP. This is not consistent with the paper's claim for load balancing improving performance: the graph suggests AP\_LB should be about 1.7 times faster than AP. Figure~\ref{fig:expruntimes} shows an expanded graph for the run times of AP and AP\_LB to show the difference in their run times.
 
 
 \section{Conclusion}
