@@ -62,19 +62,20 @@ has two Dell PowerEdge C1430 nodes. Each node has two Intel Xeon E5-2640 v4 CPUs
  -DBENCHMARK\_ENABLE\_CONN=ON for benchmarking purposes. We use Intel MPI because we found it works best with the Omni-Path interconnect.  We use GCC 4.9.2 and Intel MPI 5.1.3 Build 20160120. Prior the competition, we pre-compiled ParConnect with each of the three algorithms, Na{\"i}ve, AP and AP\_LB. 
  
  \section{Results}
-The data sets we used are shown in Figure~\ref{tab:datasets}.  These were the only provided data sets small enough to run on our cluster.  
+ The data sets we used are shown in Table~\ref{tab:datasets}. These data sets were provided by the competition organizers,
+ and were small enough for each competitor's cluster to complete the experiment on both data sets.
 % First table
-\begin{figure}[htp]
+\begin{table}[htp]
 \centering
 \begin{tabular}{l|c|c|}
 \cline{2-3}
                                            & \textbf{Edge Count} & \textbf{\begin{tabular}[c]{@{}c@{}}Connected \\ Components
                                            \end{tabular}}\\\hline
-\multicolumn{1}{|l|}{\textbf{small.fastq}} & 90665399            & 1929553\\ \hline
-\multicolumn{1}{|l|}{\textbf{large.fastq}} & 442461650           & 9006212\\ \hline
+\multicolumn{1}{|l|}{\textbf{small.fastq}} & 90,665,399            & 1,929,553\\ \hline
+\multicolumn{1}{|l|}{\textbf{large.fastq}} & 442,461,650           & 9,006,212\\ \hline
 \end{tabular}
 \caption{Edge counts and connected component counts for the two data sets.}\label{tab:datasets}
-\end{figure}
+\end{table}
 
 % Second table
 \begin{figure}[htp]
@@ -99,12 +100,12 @@ Na{\"i}ve & \includegraphics{naiveallinea} \\ \hline
 AP & \includegraphics{apallinea} \\ \hline
 AP\_LB & \includegraphics{aplballinea} \\ \hline
 \end{tabular}
-\caption{Allinea MAP compute (green) and communication (blue) times.}
+\caption{Performance timelines collected by Allinea Forge and displayed by the MAP tool. Compute time (green) and communication time (blue) is shown for each algorithm.}
 \label{fig:allinea}
 \end{figure}
 
-Performance results are shown in Figure~\ref{fig:compcomm}.
-For computation time and communication time on large.fastq, we see results similar to those in~\cite{Flick:2015}. The Na{\"i}ve algorithm is slowly falling as the number of iterations progresses, and for AP and AP\_LB, we can see slight reductions in times in each iteration. The biggest drop off in times is most apparent in iterations 6-9, but overall AP\_LB uses less time per iteration. Comparing Allinea Forge results with the measured times from within benchmark\_parconnect, we see a big discrepancy in the percentage of time spent communicating versus computing. In particular, the printouts from the tool indicate that MPI takes up approximately 20\% of the time, however the profiler indicates that 44\% of the time is in MPI calls. From Forge MAP's timeline (Figure~\ref{fig:allinea}), we can see pthread activity during some MPI portions of the execution. This indicates that computations are started while the main thread is executing an MPI call. It is also possible that some of the non-communication timed items include MPI calls, and we are counting these as compute time.
+Performance results are shown in Figure~\ref{fig:compcomm}; these times were reported by ParConnect's internal logging.
+For computation time and communication time on large.fastq, we see results similar to those in Flick\cite{Flick:2015}. The Na{\"i}ve algorithm is slowly falling as the number of iterations increases, and for AP and AP\_LB, we can see slight reductions in times in each iteration. The biggest drop off in times is most apparent in iterations 6-9, but overall AP\_LB uses less time per iteration. Comparing Allinea Forge results with the ParConnect's self-reported internal-timing, we see a big discrepancy in the percentage of time spent communicating versus computing. In particular, the timing information from ParConnect indicates that MPI takes up approximately 20\% of the time, however Forge indicates that 44\% of the time is in MPI calls. From Forge MAP's timeline (Figure~\ref{fig:allinea}), we can see pthread activity during some MPI portions of the execution. ParConnect's internal timing counts communication time and computation time separately. The discrepency between ParConnect's self-reported times and Forge's measured times is likely due to internal timing being unaware of the behavior of the MPI runtime. Communication may begin between ranks before all ranks have completed their computation portion, or computation on some ranks begins before an entire collective communications has completed. If the MPI runtime behaved the way assumed by Parconnect, Figure~\ref{fig:allinea} should nearly be bands of green and blue. This would indicate the entire application is either in a communication state or a computation state at a given point in time.
 %Fourth table
 \begin{figure}[htp]
 \centering
@@ -127,13 +128,13 @@ For the active tuple count we see behavior consistent with that of the paper, as
 \label{fig:runtimes}
 \end{figure}
 
-\begin{wrapfigure}{r}{0.29\textwidth}
+\begin{figure}[htp]
 \centering
-\includegraphics[width=.27\textwidth]{zoomedapaplb}
-\caption{Expanded AP and AP\_LB runtimes.}
+\includegraphics[width=.9\textwidth]{zoomedapaplb2}
+\caption{Expanded AP and AP\_LB runtimes. Minimum and maximum times respectively.}
 \label{fig:expruntimes}
-\end{wrapfigure}
-For the scaling study (Figure~\ref{fig:runtimes}), we can clearly see that the na{\"i}ve algorithm takes approximately twice as long as either AP or AP\_LB, consistent with the paper's claim that removing connected components speeds up the algorithm. A substantial divergence from the paper is apparent from this experiment; AP and AP\_LB perform nearly identically. While not visible in the graph, the maximum runtime for AP\_LB is always about two seconds faster than the minimum runtime of AP. This is not consistent with the paper's claim for load balancing improving performance: the graph suggests AP\_LB should be about 1.7 times faster than AP. Figure~\ref{fig:expruntimes} shows an expanded graph for the run times of AP and AP\_LB to show the difference in their run times.
+\end{figure}
+For the scaling study (Figure~\ref{fig:runtimes}), we can clearly see that the na{\"i}ve algorithm takes approximately twice as long as either AP or AP\_LB, consistent with the paper's claim that removing connected components speeds up the algorithm. A substantial divergence from the paper is apparent from this experiment; AP and AP\_LB perform nearly identically. While not visible in the graph, the maximum runtime for AP\_LB is always about two seconds faster than the minimum runtime of AP. This is not consistent with the paper's claim for load balancing improving performance: the graph suggests AP\_LB should be about 1.7 times faster than AP. Figure~\ref{fig:expruntimes} shows an expanded graph for the minimum and maximum run times of AP and AP\_LB respectively. We can see that the author's claim that AP\_LB is faster than AP, however, we see diminishing returns with increasing cores.
 
 
 \section{Conclusion}
